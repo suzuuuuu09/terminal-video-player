@@ -11,7 +11,7 @@ questions = [
 def bgr_to_ansi(r, g, b):
     return f"\033[38;2;{r};{g};{b}m█"
 
-def frame_to_colored_ascii(frame, width=200):
+def frame_to_colored_ascii(frame, width=160):
     height, original_width, _ = frame.shape
     aspect_ratio = original_width / float(height)
     new_height = int(width / aspect_ratio * 0.55)
@@ -22,7 +22,7 @@ def frame_to_colored_ascii(frame, width=200):
         for x in range(width):
             b, g, r = resized_frame[y, x]
             ascii_image += bgr_to_ansi(r, g, b)
-        ascii_image += "\033[0m\n"  # 色のリセットと次の行への移動
+        ascii_image += "\033[0m\n"
     return ascii_image
 
 def play_video(video_path):
@@ -42,6 +42,14 @@ def play_video(video_path):
     cap.release()
 
 if __name__ == "__main__":
+    for filename in os.listdir("outputs"):
+        file_path = os.path.join("outputs", filename)
+        if filename != '.keep' and os.path.isfile(file_path):
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                print(f"Error deleting {file_path}: {e}")
+
     answers = inquirer.prompt(questions)
     if answers['choice'] == "File":
         video_path = input("再生したい動画のパスを入力してください: ")
@@ -50,12 +58,13 @@ if __name__ == "__main__":
     if answers['choice'] == "URL":
         url = input("URLを入力してください: ")
         ytdlp_options = {
-            'outtmpl': 'outputs/%(id)s.%(ext)s'
+        'outtmpl': 'outputs/%(id)s.%(ext)s',
+        'noprogress': True,
         }
         with yt_dlp.YoutubeDL(ytdlp_options) as ydl:
             info_dict = ydl.extract_info(url, download=True)
             video_path = ydl.prepare_filename(info_dict)
+
     play_video(video_path)
     
-    #
     
