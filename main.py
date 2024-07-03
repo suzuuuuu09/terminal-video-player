@@ -1,10 +1,17 @@
-import cv2, os, yt_dlp
+import cv2, os, yt_dlp, inquirer
 from blessed import Terminal
+
+questions = [
+    inquirer.List('choice',
+                  message="再生方法を選択してください。",
+                  choices=['URL', 'File'],
+                  ),
+]
 
 def bgr_to_ansi(r, g, b):
     return f"\033[38;2;{r};{g};{b}m█"
 
-def frame_to_colored_ascii(frame, width=160):
+def frame_to_colored_ascii(frame, width=200):
     height, original_width, _ = frame.shape
     aspect_ratio = original_width / float(height)
     new_height = int(width / aspect_ratio * 0.55)
@@ -35,15 +42,20 @@ def play_video(video_path):
     cap.release()
 
 if __name__ == "__main__":
-    # video_path = input("再生したい動画のパスを入力してください: ")
-    # while not (os.path.isfile(video_path)):
-    #     video_path = input("正しいパスを入力してください: ")
+    answers = inquirer.prompt(questions)
+    if answers['choice'] == "File":
+        video_path = input("再生したい動画のパスを入力してください: ")
+        while not (os.path.isfile(video_path)):
+           video_path = input("正しいパスを入力してください: ")
+    if answers['choice'] == "URL":
+        url = input("URLを入力してください: ")
+        ytdlp_options = {
+            'outtmpl': 'outputs/%(id)s.%(ext)s'
+        }
+        with yt_dlp.YoutubeDL(ytdlp_options) as ydl:
+            info_dict = ydl.extract_info(url, download=True)
+            video_path = ydl.prepare_filename(info_dict)
+    play_video(video_path)
+    
     #
-    url = input("URLを入力してください: ")
-    ytdlp_options = {
-        'outtmpl': 'outputs/%(id)s.%(ext)s'
-    }
-    with yt_dlp.YoutubeDL(ytdlp_options) as ydl:
-        info_dict = ydl.extract_info(url, download=True)
-        video_path = ydl.prepare_filename(info_dict)
-        play_video(video_path)
+    
