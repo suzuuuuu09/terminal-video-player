@@ -8,6 +8,18 @@ questions = [
                   ),
 ]
 
+logo = """
+ _                           _                _                _      _                             _
+| |_   ___  _ __  _ __ ___  (_) _ __    __ _ | |       __   __(_)  __| |  ___   ___          _ __  | |  __ _  _   _   ___  _ __ 
+| __| / _ \| '__|| '_ ` _ \ | || '_ \  / _` || | _____ \ \ / /| | / _` | / _ \ / _ \  _____ | '_ \ | | / _` || | | | / _ \| '__|
+| |_ |  __/| |   | | | | | || || | | || (_| || ||_____| \ V / | || (_| ||  __/| (_) ||_____|| |_) || || (_| || |_| ||  __/| |   
+ \__| \___||_|   |_| |_| |_||_||_| |_| \__,_||_|         \_/  |_| \__,_| \___| \___/        | .__/ |_| \__,_| \__, | \___||_|   
+                                                                                            |_|               |___/
+"""
+                                                                                            
+def clear_screen():
+    print("\33[2J\033[3;1H")
+
 def bgr_to_ansi(r, g, b):
     return f"\033[38;2;{r};{g};{b}m█"
 
@@ -38,10 +50,13 @@ def play_video(video_path):
             ascii_image = frame_to_colored_ascii(frame)
             print(term.home + ascii_image)
             cv2.waitKey(30)
+            
 
     cap.release()
 
 if __name__ == "__main__":
+    clear_screen()
+    print(logo)
     for filename in os.listdir("outputs"):
         file_path = os.path.join("outputs", filename)
         if filename != '.keep' and os.path.isfile(file_path):
@@ -60,11 +75,13 @@ if __name__ == "__main__":
         ytdlp_options = {
         'outtmpl': 'outputs/%(id)s.%(ext)s',
         'noprogress': True,
+        'quiet': True,
+        'no_warnings': True,
         }
         with yt_dlp.YoutubeDL(ytdlp_options) as ydl:
             info_dict = ydl.extract_info(url, download=True)
             video_path = ydl.prepare_filename(info_dict)
-
+    clear_screen()
     play_video(video_path)
     
     
