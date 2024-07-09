@@ -1,4 +1,4 @@
-import cv2, os, yt_dlp, inquirer
+import cv2, os, yt_dlp
 from blessed import Terminal
 from text_displayer import TextDisplayer
 from choice_selector import ChoiceSelector
