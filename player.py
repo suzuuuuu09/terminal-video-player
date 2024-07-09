@@ -1,6 +1,8 @@
 import cv2, os, yt_dlp, inquirer
 from blessed import Terminal
 from text_displayer import TextDisplayer
+from choice_selector import ChoiceSelector
+from animation import Animation
 import signal
 
 def signal_handler(sig, frame):
@@ -9,13 +11,7 @@ def signal_handler(sig, frame):
 
 signal.signal(signal.SIGINT, signal_handler)
 displayer = TextDisplayer()
-
-questions = [
-    inquirer.List('choice',
-                  message="再生方法を選択してください。",
-                  choices=['URL', 'File'],
-                  ),
-]
+animation = Animation()
 
 logo = """
  _                           _                _                _      _                             _
@@ -27,7 +23,10 @@ logo = """
 """
 
 def clear_screen():
-    print("\33[J\033[3;3H")
+    print("\33[2J")
+
+def cursor_move(x, y):
+    print(f"\033[{y};{x}H")
 
 def bgr_to_ansi(r, g, b):
     return f"\033[38;2;{r};{g};{b}m█"
@@ -68,7 +67,8 @@ def play_video(video_path):
 
 if __name__ == "__main__":
     clear_screen()
-    displayer.printFL(logo, 0.3)
+    cursor_move(0, 0)
+    displayer.printIL(logo, 0.3)
     for filename in os.listdir("outputs"):
         file_path = os.path.join("outputs", filename)
         if filename != '.keep' and os.path.isfile(file_path):
@@ -77,13 +77,17 @@ if __name__ == "__main__":
             except Exception as e:
                 print(f"Error deleting {file_path}: {e}")
 
-    answers = inquirer.prompt(questions)
-    if answers['choice'] == "File":
-        video_path = displayer.inputF("再生したい動画のパスを入力してください: ", 0.05)
+    cursor_move(0, 9)
+    displayer.printI("再生方法を選択してください: ", 0.05)
+    options = ["URL", "File"]
+    selector = ChoiceSelector(options, 11)
+    selected_option = selector.run()
+    if selected_option == "File":
+        video_path = displayer.inputI("再生したい動画のパスを入力してください: ", 0.05)
         while not (os.path.isfile(video_path)):
-           video_path = displayer.inputF("正しいパスを入力してください: ", 0.05)
-    if answers['choice'] == "URL":
-        url = displayer.inputF("URLを入力してください: ", 0.05)
+           video_path = displayer.inputI("正しいパスを入力してください: ", 0.05)
+    if selected_option == "URL":
+        url = displayer.inputI("URLを入力してください: ", 0.05)
         ytdlp_options = {
         'outtmpl': 'outputs/%(id)s.%(ext)s',
         'noprogress': True,
@@ -93,6 +97,8 @@ if __name__ == "__main__":
         with yt_dlp.YoutubeDL(ytdlp_options) as ydl:
             info_dict = ydl.extract_info(url, download=True)
             video_path = ydl.prepare_filename(info_dict)
+
+    animation.loading_animation(2.0)
     clear_screen()
     play_video(video_path)
     
