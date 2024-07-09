@@ -1,5 +1,14 @@
 import cv2, os, yt_dlp, inquirer
 from blessed import Terminal
+from text_displayer import TextDisplayer
+import signal
+
+def signal_handler(sig, frame):
+    print("\nプログラムが中断されました。リソースを解放しています...")
+    raise SystemExit
+
+signal.signal(signal.SIGINT, signal_handler)
+displayer = TextDisplayer()
 
 questions = [
     inquirer.List('choice',
@@ -16,9 +25,9 @@ logo = """
  \__| \___||_|   |_| |_| |_||_||_| |_| \__,_||_|         \_/  |_| \__,_| \___| \___/        | .__/ |_| \__,_| \__, | \___||_|   
                                                                                             |_|               |___/
 """
-                                                                                            
+
 def clear_screen():
-    print("\33[2J\033[3;1H")
+    print("\33[J\033[3;3H")
 
 def bgr_to_ansi(r, g, b):
     return f"\033[38;2;{r};{g};{b}m█"
@@ -41,22 +50,25 @@ def play_video(video_path):
     term = Terminal()
     cap = cv2.VideoCapture(video_path)
 
-    with term.fullscreen(), term.cbreak(), term.hidden_cursor():
-        print(term.clear())
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
-            ascii_image = frame_to_colored_ascii(frame)
-            print(term.home + ascii_image)
-            cv2.waitKey(30)
-            
-
-    cap.release()
+    try:
+        with term.fullscreen(), term.cbreak(), term.hidden_cursor():
+            print(term.clear())
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                ascii_image = frame_to_colored_ascii(frame)
+                print(term.home + ascii_image)
+                cv2.waitKey(30)
+    except Exception as e:
+        print(f"再生中にエラーが発生しました: {e}")
+    finally:
+        cap.release()
+        print(term.normal)
 
 if __name__ == "__main__":
     clear_screen()
-    print(logo)
+    displayer.printFL(logo, 0.3)
     for filename in os.listdir("outputs"):
         file_path = os.path.join("outputs", filename)
         if filename != '.keep' and os.path.isfile(file_path):
@@ -67,11 +79,11 @@ if __name__ == "__main__":
 
     answers = inquirer.prompt(questions)
     if answers['choice'] == "File":
-        video_path = input("再生したい動画のパスを入力してください: ")
+        video_path = displayer.inputF("再生したい動画のパスを入力してください: ", 0.05)
         while not (os.path.isfile(video_path)):
-           video_path = input("正しいパスを入力してください: ")
+           video_path = displayer.inputF("正しいパスを入力してください: ", 0.05)
     if answers['choice'] == "URL":
-        url = input("URLを入力してください: ")
+        url = displayer.inputF("URLを入力してください: ", 0.05)
         ytdlp_options = {
         'outtmpl': 'outputs/%(id)s.%(ext)s',
         'noprogress': True,
