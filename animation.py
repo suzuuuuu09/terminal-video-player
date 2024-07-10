@@ -1,6 +1,5 @@
 from time import sleep
 from random import uniform
-import math
 
 class Animation:
     # ロードのアニメーション
