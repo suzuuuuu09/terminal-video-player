@@ -98,7 +98,7 @@ if __name__ == "__main__":
             info_dict = ydl.extract_info(url, download=True)
             video_path = ydl.prepare_filename(info_dict)
 
-    animation.loading_animation_dot(2.0)
+    animation.loading_animation(2.0)
     clear_screen()
     play_video(video_path)
     
